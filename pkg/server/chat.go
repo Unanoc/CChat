@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
+	"sync"
+	"time"
 )
 
 // CreateChat ...
@@ -19,6 +20,7 @@ func CreateChat() *Chat {
 type Chat struct {
 	Register chan net.Conn
 	Rooms    map[string]*Room
+	sync.Mutex
 }
 
 // Run ...
@@ -35,61 +37,103 @@ func (c *Chat) Run() {
 func (c *Chat) ProcessConn(conn net.Conn) {
 	data := make([]byte, 254)
 
-	// Get room's name
+	// Getting client's nickname
+	usernameLen, err := conn.Read(data)
+	if err != nil {
+		log.Printf("Client %v quit.\n", conn.RemoteAddr())
+		conn.Close()
+		return
+	}
+	username := string(data[:usernameLen])
+
+	// Getting room's name
 	roomLen, err := conn.Read(data)
 	if err != nil {
 		log.Printf("Client %v quit.\n", conn.RemoteAddr())
 		conn.Close()
 		return
 	}
+	roomname := string(data[:roomLen])
 
-	fmt.Println(string(data))
+	c.ProcessRoom(roomname)
 
-	roomName := string(data[:roomLen])
-	room, exists := c.Rooms[roomName]
-	if !exists {
-		c.Rooms[roomName] = CreateRoom()
-		room = c.Rooms[roomName]
-	}
+	// Joining the room
+	c.Lock()
+	defer c.Unlock()
 
-	fmt.Println(len(room.Clients))
-
-	// Get client's nickname
-	nameLength, err := conn.Read(data)
-	if err != nil {
-		log.Printf("Client %v quit.\n", conn.RemoteAddr())
-		conn.Close()
-		return
-	}
-	name := string(data[:nameLength])
-	fmt.Println(name)
-
-	go room.Run()
-
-	if _, exists := room.Clients[name]; !exists {
-		client := CreateClient(name, conn)
-		room.Clients[name] = client
-		joinedMsg := name + " joined to the room"
-		room.Messages <- joinedMsg
-		log.Println(joinedMsg)
+	room := c.Rooms[roomname]
+	if c.IsUsernameUniq(username, roomname) {
+		client := CreateClient(username, conn)
+		room.Clients[username] = client
+		room.Messages <- fmt.Sprint(username, " joined to the room")
 	} else {
 		in, err := conn.Write([]byte("This nickname is already exists in room :("))
 		if err != nil {
 			fmt.Printf("Error when send to client: %d\n", in)
-			os.Exit(0)
 		}
 		return
 	}
+
+	go c.ListenClient(conn, username, room)
+}
+
+// ProcessRoom ...
+func (c *Chat) ProcessRoom(roomname string) {
+	c.Lock()
+	defer c.Unlock()
+
+	if _, exists := c.Rooms[roomname]; !exists {
+		c.Rooms[roomname] = CreateRoom(roomname)
+		room := c.Rooms[roomname]
+		go room.Run()
+	}
+}
+
+// IsUsernameUniq ...
+func (c *Chat) IsUsernameUniq(username, roomname string) bool {
+	_, exists := c.Rooms[roomname].Clients[username]
+	return !exists
+}
+
+// ListenClient ...
+func (c *Chat) ListenClient(conn net.Conn, username string, room *Room) {
+	data := make([]byte, 254)
 
 	for {
 		msgLen, err := conn.Read(data)
 		if err != nil {
 			log.Printf("Client %s quit.\n", conn.RemoteAddr())
+			room.Messages <- fmt.Sprintf("%s left the room", username)
+			room.RemoveClient(username)
 			conn.Close()
 			return
 		}
 
-		msg := fmt.Sprintf("[%s]: %s", name, data[:msgLen])
+		msg := fmt.Sprintf("(%s) %s: %s", room.Name, username, data[:msgLen])
 		room.Messages <- msg
+	}
+}
+
+// CleanChat ...
+func (c *Chat) CleanChat() {
+	for {
+		time.Sleep(1 * time.Minute)
+		c.Lock()
+		for _, room := range c.Rooms {
+			if room.ClientCount() == 0 {
+				c.RemoveRoom(room)
+			}
+		}
+		c.Unlock()
+	}
+}
+
+// RemoveRoom ...
+func (c *Chat) RemoveRoom(room *Room) {
+	if room != nil {
+		if room.ClientCount() == 0 {
+			log.Printf("Room [%s] has been destroyed", room.Name)
+			delete(c.Rooms, room.Name)
+		}
 	}
 }
