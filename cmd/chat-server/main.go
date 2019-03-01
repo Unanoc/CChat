@@ -18,9 +18,10 @@ func main() {
 
 	c := server.CreateChat()
 	go c.Run()
+	go c.CleanChat()
 
-	lis, err := net.Listen("tcp", remote)
-	defer lis.Close()
+	listener, err := net.Listen("tcp", remote)
+	defer listener.Close()
 
 	if err != nil {
 		log.Printf("Error when listen: %s, Err: %s\n", remote, err)
@@ -28,7 +29,7 @@ func main() {
 	}
 
 	for {
-		conn, err := lis.Accept()
+		conn, err := listener.Accept()
 		if err != nil {
 			log.Println("Error accepting client: ", err.Error())
 			os.Exit(0)
