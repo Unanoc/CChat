@@ -2,7 +2,7 @@ package main
 
 import (
 	"chat/pkg/server"
-	"fmt"
+	"log"
 	"net"
 	"os"
 )
@@ -14,7 +14,7 @@ var (
 )
 
 func main() {
-	fmt.Println("Initiating server... (Ctrl-C to stop)")
+	log.Println("Initiating server... (Ctrl-C to stop)")
 
 	c := server.CreateChat()
 	go c.Run()
@@ -23,14 +23,14 @@ func main() {
 	defer lis.Close()
 
 	if err != nil {
-		fmt.Printf("Error when listen: %s, Err: %s\n", remote, err)
+		log.Printf("Error when listen: %s, Err: %s\n", remote, err)
 		os.Exit(-1)
 	}
 
 	for {
 		conn, err := lis.Accept()
 		if err != nil {
-			fmt.Println("Error accepting client: ", err.Error())
+			log.Println("Error accepting client: ", err.Error())
 			os.Exit(0)
 		}
 
