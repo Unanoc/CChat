@@ -9,19 +9,19 @@ import (
 	"github.com/fatih/color"
 )
 
-// CreateClient ...
+// CreateClient returns an instance of Client
 func CreateClient(conn net.Conn) *Client {
 	return &Client{
 		Conn: conn,
 	}
 }
 
-// Client ...
+// Client keeps the connection of user
 type Client struct {
 	Conn net.Conn
 }
 
-// ProcessJoin ...
+// ProcessJoin organizes the connection process
 func (c *Client) ProcessJoin() error {
 	writeStr := make([]byte, 254)
 
@@ -41,7 +41,7 @@ func (c *Client) ProcessJoin() error {
 	return nil
 }
 
-// GetMessagesHandler ...
+// GetMessagesHandler gets messages for client
 func (c *Client) GetMessagesHandler() {
 	readStr := make([]byte, 254)
 	for {
@@ -54,7 +54,7 @@ func (c *Client) GetMessagesHandler() {
 	}
 }
 
-// WriteMessagesHandler ...
+// WriteMessagesHandler sends client's messages
 func (c *Client) WriteMessagesHandler() {
 	reader := bufio.NewReader(os.Stdin)
 	for {
