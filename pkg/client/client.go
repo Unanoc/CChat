@@ -25,19 +25,19 @@ type Client struct {
 func (c *Client) ProcessJoin() error {
 	writeStr := make([]byte, 254)
 
-	fmt.Printf(color.BlueString("Enter your name: "))
+	color.Blue("Enter your name: ")
 	fmt.Scanf("%s", &writeStr)
 	if _, err := c.Conn.Write([]byte(writeStr)); err != nil {
-		return fmt.Errorf(color.RedString("Error when send to server\n"))
+		return fmt.Errorf(color.RedString("Error when send to server"))
 	}
 
-	fmt.Printf(color.BlueString("Enter room name you want to join: "))
+	color.Blue("Enter room name you want to join: ")
 	fmt.Scanf("%s", &writeStr)
 	if _, err := c.Conn.Write([]byte(writeStr)); err != nil {
-		return fmt.Errorf(color.RedString("Error when send to server\n"))
+		return fmt.Errorf(color.RedString("Error when send to server"))
 	}
 
-	fmt.Println(color.GreenString("You have been successfully connected."))
+	color.HiGreen("You have been successfully connected")
 	return nil
 }
 
@@ -47,10 +47,10 @@ func (c *Client) GetMessagesHandler() {
 	for {
 		length, err := c.Conn.Read(readStr)
 		if err != nil {
-			fmt.Printf(color.RedString("Error when read from server. Error:%s\n", err))
+			color.Red("Connection is closed")
 			return
 		}
-		fmt.Println(string(readStr[:length]))
+		fmt.Printf("%s", readStr[:length])
 	}
 }
 
@@ -59,14 +59,9 @@ func (c *Client) WriteMessagesHandler() {
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		writeStr, _, _ := reader.ReadLine()
-		if string(writeStr) == "quit" {
-			fmt.Print(color.RedString("Communication terminated.\n"))
-			return
-		}
-
-		in, err := c.Conn.Write([]byte(writeStr))
+		_, err := c.Conn.Write([]byte(writeStr))
 		if err != nil {
-			fmt.Printf(color.RedString("Error when send to server: %d\n", in))
+			color.Red("Error when send to server")
 			return
 		}
 	}
