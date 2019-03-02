@@ -24,8 +24,6 @@ func main() {
 		return
 	}
 
-	fmt.Println(color.GreenString("Connection is established."))
-
 	c := client.CreateClient(conn)
 	if err := c.ProcessJoin(); err != nil {
 		fmt.Print(err)
