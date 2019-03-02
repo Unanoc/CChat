@@ -31,7 +31,7 @@ func main() {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Println("Error accepting client: ", err.Error())
+			log.Printf("Error accepting client: %s\n", err.Error())
 			os.Exit(0)
 		}
 

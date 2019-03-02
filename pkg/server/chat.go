@@ -27,7 +27,7 @@ type Chat struct {
 func (c *Chat) Run() {
 	for {
 		conn := <-c.Register
-		log.Printf("New connection: [%v]\n", conn.RemoteAddr())
+		log.Printf("New connection: [%v]", conn.RemoteAddr())
 
 		go c.ProcessConn(conn)
 	}
@@ -40,7 +40,7 @@ func (c *Chat) ProcessConn(conn net.Conn) {
 	// Getting client's nickname
 	usernameLen, err := conn.Read(data)
 	if err != nil {
-		log.Printf("Client %v quit.\n", conn.RemoteAddr())
+		log.Printf("Client %v quit", conn.RemoteAddr())
 		conn.Close()
 		return
 	}
@@ -49,7 +49,7 @@ func (c *Chat) ProcessConn(conn net.Conn) {
 	// Getting room's name
 	roomLen, err := conn.Read(data)
 	if err != nil {
-		log.Printf("Client %v quit.\n", conn.RemoteAddr())
+		log.Printf("Client %v quit", conn.RemoteAddr())
 		conn.Close()
 		return
 	}
@@ -67,7 +67,7 @@ func (c *Chat) ProcessConn(conn net.Conn) {
 		client = CreateClient(username, conn)
 		room.Register <- client
 	} else {
-		_, err := conn.Write([]byte("This nickname is already exists in room :("))
+		_, err := conn.Write([]byte("This nickname is already exists in room"))
 		if err != nil {
 			log.Println("Error when send to client")
 		}
@@ -102,13 +102,25 @@ func (c *Chat) ListenClient(client *Client, room *Room) {
 	for {
 		msgLen, err := client.Conn.Read(data)
 		if err != nil {
-			log.Printf("Client %s quit.\n", client.Conn.RemoteAddr())
+			log.Printf("Client %s quit", client.Conn.RemoteAddr())
 			room.Unregister <- client
+			client.Conn.Close()
 			return
 		}
 
-		msg := fmt.Sprintf("(%s) %s: %s", room.Name, client.Username, data[:msgLen])
-		room.Messages <- msg
+		rawMessage := string(data[:msgLen])
+		switch rawMessage {
+		case "/quit":
+			room.Unregister <- client
+			client.Conn.Close()
+			return
+		case "/change_room":
+			c.ProcessConn(client.Conn)
+			room.Unregister <- client
+			return
+		default:
+			room.Messages <- fmt.Sprintf("(%s) %s: %s", room.Name, client.Username, rawMessage)
+		}
 	}
 }
 
@@ -130,7 +142,7 @@ func (c *Chat) CleanChat() {
 func (c *Chat) RemoveRoom(room *Room) {
 	if room != nil {
 		if room.ClientCount() == 0 {
-			log.Printf("Room [%s] has been destroyed\n", room.Name)
+			log.Printf("Room [%s] has been destroyed", room.Name)
 			delete(c.Rooms, room.Name)
 		}
 	}
