@@ -1,7 +1,10 @@
 package server
 
 import (
+	"chat/utils"
 	"net"
+
+	"github.com/fatih/color"
 )
 
 // Client is used to get access to connection
@@ -26,6 +29,7 @@ func CreateRoom(name string) *Room {
 		Unregister: make(chan *Client),
 		Clients:    make(map[string]*Client),
 		Messages:   make(chan string),
+		Storage:    utils.CreateQueue(128),
 	}
 }
 
@@ -36,32 +40,52 @@ type Room struct {
 	Unregister chan *Client
 	Clients    map[string]*Client
 	Messages   chan string
+	Storage    *utils.Queue
 }
 
 // Run starts a room for message exchange
 func (r *Room) Run() {
+	var msg string
+
 	for {
 		select {
-		case msg := <-r.Messages:
-			r.Broadcast(msg)
+		case msg = <-r.Messages:
+			msg = msg + "\n"
 		case client := <-r.Register:
 			r.Clients[client.Username] = client
-			r.Broadcast(client.Username + " joined to the room")
+			if history := r.Storage.FromHeadToTail(); history != nil {
+				r.SendHistory(history, client)
+			}
+			msg = color.HiBlackString("%s joined to the room [%s]\n", client.Username, r.Name)
 		case client := <-r.Unregister:
-			client.Conn.Close()
 			delete(r.Clients, client.Username)
-			r.Broadcast(client.Username + "left the room")
+			msg = color.HiBlackString("%s left the room [%s]\n", client.Username, r.Name)
 		}
+
+		r.Broadcast(msg)
+		r.Storage.Push(msg)
 	}
 }
 
 // Broadcast sends messages for all clients in the room
 func (r *Room) Broadcast(msg string) {
 	for _, client := range r.Clients {
-		_, err := client.Conn.Write([]byte(msg))
-		if err != nil {
-			r.Unregister <- client
-		}
+		r.SendToClient(msg, client)
+	}
+}
+
+// SendToClient sends message to client
+func (r *Room) SendToClient(msg string, client *Client) {
+	_, err := client.Conn.Write([]byte(msg))
+	if err != nil {
+		r.Unregister <- client
+	}
+}
+
+// SendHistory sends last 128 messages of the room to client
+func (r *Room) SendHistory(storage []string, client *Client) {
+	for _, msg := range storage {
+		r.SendToClient(msg, client)
 	}
 }
 
