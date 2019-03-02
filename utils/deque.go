@@ -60,19 +60,23 @@ func (d *Queue) Pop() error {
 }
 
 // FromHeadToTail prints all elements from Head to Tail
-func (d *Queue) FromHeadToTail() {
+func (d *Queue) FromHeadToTail() []string {
 	if d.Len == 0 {
-		return
+		return nil
 	}
+
 	var elementsPastCounter int
+	result := make([]string, 128)
 
 	for i := d.Head; i != d.Tail || elementsPastCounter != d.Len; i++ {
 		if i == len(d.Buf)-1 {
-			fmt.Println(d.Buf[i])
+			result = append(result, d.Buf[i])
 			i = -1
 		} else {
-			fmt.Println(d.Buf[i])
+			result = append(result, d.Buf[i])
 		}
 		elementsPastCounter++
 	}
+
+	return result
 }
