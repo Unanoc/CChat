@@ -40,7 +40,7 @@ func (c *Chat) ProcessConn(conn net.Conn) {
 	// Getting client's nickname
 	usernameLen, err := conn.Read(data)
 	if err != nil {
-		log.Printf("Client %v quit", conn.RemoteAddr())
+		log.Printf("Client %s has not been connected", conn.RemoteAddr())
 		conn.Close()
 		return
 	}
@@ -49,7 +49,7 @@ func (c *Chat) ProcessConn(conn net.Conn) {
 	// Getting room's name
 	roomLen, err := conn.Read(data)
 	if err != nil {
-		log.Printf("Client %v quit", conn.RemoteAddr())
+		log.Printf("Client %s has not been connected", conn.RemoteAddr())
 		conn.Close()
 		return
 	}
@@ -71,6 +71,7 @@ func (c *Chat) ProcessConn(conn net.Conn) {
 		if err != nil {
 			log.Println("Error when send to client")
 		}
+		conn.Close()
 		return
 	}
 
@@ -102,8 +103,8 @@ func (c *Chat) ListenClient(client *Client, room *Room) {
 	for {
 		msgLen, err := client.Conn.Read(data)
 		if err != nil {
-			log.Printf("Client %s quit", client.Conn.RemoteAddr())
 			room.Unregister <- client
+			log.Printf("Client %s quit", client.Conn.RemoteAddr())
 			client.Conn.Close()
 			return
 		}
@@ -112,11 +113,12 @@ func (c *Chat) ListenClient(client *Client, room *Room) {
 		switch rawMessage {
 		case "/quit":
 			room.Unregister <- client
+			log.Printf("Client %s quit", client.Conn.RemoteAddr())
 			client.Conn.Close()
 			return
 		case "/change_room":
-			c.ProcessConn(client.Conn)
 			room.Unregister <- client
+			c.ProcessConn(client.Conn)
 			return
 		default:
 			room.Messages <- fmt.Sprintf("(%s) %s: %s", room.Name, client.Username, rawMessage)
