@@ -23,32 +23,33 @@ type Client struct {
 
 // ProcessJoin organizes the connection process
 func (c *Client) ProcessJoin() error {
-	writeStr := make([]byte, 254)
-	readStr := make([]byte, 254)
-
-	// Get the name of client
-	length, err := c.Conn.Read(readStr)
-	if err != nil {
-		return fmt.Errorf(color.RedString("Error when recieve from server"))
+	// Getting the client's name and room's name
+	for i := 0; i < 2; i++ {
+		if err := ReadAndWrite(c); err != nil {
+			return err
+		}
 	}
-	fmt.Printf("%s", readStr[:length])
-	fmt.Scanf("%s", &writeStr)
-	if _, err := c.Conn.Write([]byte(writeStr)); err != nil {
-		return fmt.Errorf(color.RedString("Error when send to server"))
-	}
-
-	// Get the room name
-	length, err = c.Conn.Read(readStr)
-	if err != nil {
-		return fmt.Errorf(color.RedString("Error when recieve from server"))
-	}
-	fmt.Printf("%s", readStr[:length])
-	fmt.Scanf("%s", &writeStr)
-	if _, err := c.Conn.Write([]byte(writeStr)); err != nil {
-		return fmt.Errorf(color.RedString("Error when send to server"))
-	}
-
 	color.HiGreen("You have been successfully connected")
+	return nil
+}
+
+// ReadAndWrite accepts request message from server and sends client's reply to server
+func ReadAndWrite(client *Client) error {
+	writeStr, readStr := make([]byte, 254), make([]byte, 254)
+
+	// Getting from server
+	length, err := client.Conn.Read(readStr)
+	if err != nil {
+		return fmt.Errorf(color.RedString("Error when recieve from server"))
+	}
+	fmt.Printf("%s", readStr[:length])
+
+	// Writing to server
+	fmt.Scanf("%s", &writeStr)
+	if _, err := client.Conn.Write([]byte(writeStr)); err != nil {
+		return fmt.Errorf(color.RedString("Error when send to server"))
+	}
+
 	return nil
 }
 
