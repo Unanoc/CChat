@@ -1,5 +1,5 @@
 # CChat
-CLI room chat which is based on sockets.
+CLI room chat which is based on sockets
 
 ## Install
 ```
