@@ -6,6 +6,8 @@ import (
 	"net"
 	"sync"
 	"time"
+
+	"github.com/fatih/color"
 )
 
 // CreateChat returns an instance of Chat
@@ -36,25 +38,37 @@ func (c *Chat) Run() {
 // ProcessConn initialises clients's connection
 func (c *Chat) ProcessConn(conn net.Conn) {
 	data := make([]byte, 254)
+	var message string
 
 	// Getting client's nickname
-	usernameLen, err := conn.Read(data)
+	message = color.BlueString("Enter your name: ")
+	if _, err := conn.Write([]byte(message)); err != nil {
+		conn.Close()
+		return
+	}
+	len, err := conn.Read(data)
 	if err != nil {
 		log.Printf("Client %s has not been connected", conn.RemoteAddr())
 		conn.Close()
 		return
 	}
-	username := string(data[:usernameLen])
+	username := string(data[:len])
 
 	// Getting room's name
-	roomLen, err := conn.Read(data)
+	message = color.BlueString("Enter room name you want to join: ")
+	if _, err = conn.Write([]byte(message)); err != nil {
+		conn.Close()
+		return
+	}
+	len, err = conn.Read(data)
 	if err != nil {
 		log.Printf("Client %s has not been connected", conn.RemoteAddr())
 		conn.Close()
 		return
 	}
-	roomname := string(data[:roomLen])
+	roomname := string(data[:len])
 
+	// Start up the room
 	c.ProcessRoom(roomname)
 
 	// Joining the room
@@ -63,15 +77,17 @@ func (c *Chat) ProcessConn(conn net.Conn) {
 
 	room := c.Rooms[roomname]
 	var client *Client
+
 	if c.IsUsernameUniq(username, roomname) {
 		client = CreateClient(username, conn)
 		room.Register <- client
 	} else {
-		_, err := conn.Write([]byte("This nickname is already exists in room"))
+		message = color.HiRedString("This nickname is already exists in this room.\n")
+		_, err := conn.Write([]byte(message))
 		if err != nil {
 			log.Println("Error when send to client")
 		}
-		conn.Close()
+		go c.ProcessConn(conn)
 		return
 	}
 
@@ -120,6 +136,8 @@ func (c *Chat) ListenClient(client *Client, room *Room) {
 			room.Unregister <- client
 			c.ProcessConn(client.Conn)
 			return
+		case "/list":
+			room.SendClients(client)
 		default:
 			room.Messages <- fmt.Sprintf("(%s) %s: %s", room.Name, client.Username, rawMessage)
 		}

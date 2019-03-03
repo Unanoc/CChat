@@ -24,14 +24,25 @@ type Client struct {
 // ProcessJoin organizes the connection process
 func (c *Client) ProcessJoin() error {
 	writeStr := make([]byte, 254)
+	readStr := make([]byte, 254)
 
-	color.Blue("Enter your name: ")
+	length, err := c.Conn.Read(readStr)
+	if err != nil {
+		color.Red("Connection is closed")
+		return fmt.Errorf(color.RedString("Error when send to server"))
+	}
+	fmt.Printf("%s", readStr[:length])
 	fmt.Scanf("%s", &writeStr)
 	if _, err := c.Conn.Write([]byte(writeStr)); err != nil {
 		return fmt.Errorf(color.RedString("Error when send to server"))
 	}
 
-	color.Blue("Enter room name you want to join: ")
+	length, err = c.Conn.Read(readStr)
+	if err != nil {
+		color.Red("Connection is closed")
+		return fmt.Errorf(color.RedString("Error when send to server"))
+	}
+	fmt.Printf("%s", readStr[:length])
 	fmt.Scanf("%s", &writeStr)
 	if _, err := c.Conn.Write([]byte(writeStr)); err != nil {
 		return fmt.Errorf(color.RedString("Error when send to server"))
