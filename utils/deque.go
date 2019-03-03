@@ -59,7 +59,7 @@ func (d *Queue) Pop() error {
 	return nil
 }
 
-// FromHeadToTail prints all elements from Head to Tail
+// FromHeadToTail returns list of all elements from Head to Tail
 func (d *Queue) FromHeadToTail() []string {
 	if d.Len == 0 {
 		return nil
