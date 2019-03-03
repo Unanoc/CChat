@@ -20,7 +20,7 @@ func main() {
 	defer conn.Close()
 
 	if err != nil {
-		fmt.Println(color.RedString("Server not found."))
+		color.Red("Server not found.")
 		return
 	}
 

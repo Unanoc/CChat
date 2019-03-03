@@ -26,10 +26,10 @@ func (c *Client) ProcessJoin() error {
 	writeStr := make([]byte, 254)
 	readStr := make([]byte, 254)
 
+	// Get the name of client
 	length, err := c.Conn.Read(readStr)
 	if err != nil {
-		color.Red("Connection is closed")
-		return fmt.Errorf(color.RedString("Error when send to server"))
+		return fmt.Errorf(color.RedString("Error when recieve from server"))
 	}
 	fmt.Printf("%s", readStr[:length])
 	fmt.Scanf("%s", &writeStr)
@@ -37,10 +37,10 @@ func (c *Client) ProcessJoin() error {
 		return fmt.Errorf(color.RedString("Error when send to server"))
 	}
 
+	// Get the room name
 	length, err = c.Conn.Read(readStr)
 	if err != nil {
-		color.Red("Connection is closed")
-		return fmt.Errorf(color.RedString("Error when send to server"))
+		return fmt.Errorf(color.RedString("Error when recieve from server"))
 	}
 	fmt.Printf("%s", readStr[:length])
 	fmt.Scanf("%s", &writeStr)
