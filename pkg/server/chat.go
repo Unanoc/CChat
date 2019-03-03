@@ -37,11 +37,13 @@ func (c *Chat) Run() {
 
 // ProcessConn initialises clients's connection
 func (c *Chat) ProcessConn(conn net.Conn) {
-	username, err := GetInfoFromClient("Enter your name: ", conn)
+	msgToClient := color.BlueString("Enter your name: ")
+	username, err := DealWithClient(msgToClient, conn, true)
 	if err != nil {
 		return
 	}
-	roomname, err := GetInfoFromClient("Enter room name you want to join: ", conn)
+	msgToClient = color.BlueString("Enter room name you want to join: ")
+	roomname, err := DealWithClient(msgToClient, conn, true)
 	if err != nil {
 		return
 	}
@@ -57,9 +59,9 @@ func (c *Chat) ProcessConn(conn net.Conn) {
 		c.Unlock()
 		go c.ListenClient(client, room)
 	} else {
-		message := color.HiRedString("This nickname is already exists in this room.\n")
-		if _, err := conn.Write([]byte(message)); err != nil {
-			log.Println("Error when send to client")
+		msgToClient = color.HiRedString("This nickname is already exists in this room.\n")
+		if _, err = DealWithClient(msgToClient, conn, false); err != nil {
+			return
 		}
 
 		go c.ProcessConn(conn)
@@ -67,30 +69,32 @@ func (c *Chat) ProcessConn(conn net.Conn) {
 	}
 }
 
-// GetInfoFromClient sends message with request to client and accept an answer from client
-func GetInfoFromClient(requestMsg string, conn net.Conn) (result string, err error) {
+// DealWithClient sends message to client, then reads message from client and return it if flag "withReading" is true
+func DealWithClient(requestMsg string, conn net.Conn, withReading bool) (result string, err error) {
 	data := make([]byte, 254)
 
-	message := color.BlueString(requestMsg)
-	if _, err = conn.Write([]byte(message)); err != nil {
+	if _, err = conn.Write([]byte(requestMsg)); err != nil {
 		conn.Close()
-		return 
+		return
 	}
 
-	length, err := conn.Read(data)
-	if err != nil {
-		log.Printf("Client %s has not been connected", conn.RemoteAddr())
-		conn.Close()
-		return "", err
+	if withReading {
+		length, err := conn.Read(data)
+		if err != nil {
+			log.Printf("Client %s has not been connected", conn.RemoteAddr())
+			conn.Close()
+			return "", err
+		}
+		result = string(data[:length])
 	}
-	result = string(data[:length])
 
 	return
 }
 
 // ProcessRoom creates room if room does not exists
 func (c *Chat) ProcessRoom(roomname string) {
-	c.Lock(); defer c.Unlock()
+	c.Lock()
+	defer c.Unlock()
 
 	if _, exists := c.Rooms[roomname]; !exists {
 		c.Rooms[roomname] = CreateRoom(roomname)
@@ -101,7 +105,8 @@ func (c *Chat) ProcessRoom(roomname string) {
 
 // IsUsernameUniq checks if username is uniq in room
 func (c *Chat) IsUsernameUniq(username, roomname string) bool {
-	c.Lock(); defer c.Unlock()
+	c.Lock()
+	defer c.Unlock()
 
 	_, exists := c.Rooms[roomname].Clients[username]
 	return !exists
