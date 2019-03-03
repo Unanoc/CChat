@@ -90,7 +90,7 @@ func (r *Room) SendHistory(storage []string, client *Client) {
 }
 
 // SendClients sends list of clients of the room
-func (r *Room) SendClients(reciever *Client) {
+func (r *Room) SendClientList(reciever *Client) {
 	for _, client := range r.Clients {
 		r.SendToClient(color.HiYellowString("%s\n", client.Username), reciever)
 	}

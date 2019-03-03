@@ -29,7 +29,7 @@ type Chat struct {
 func (c *Chat) Run() {
 	for {
 		conn := <-c.Register
-		log.Printf("New connection: [%v]", conn.RemoteAddr())
+		log.Printf("New connection: [%s]", conn.RemoteAddr())
 
 		go c.ProcessConn(conn)
 	}
@@ -37,67 +37,60 @@ func (c *Chat) Run() {
 
 // ProcessConn initialises clients's connection
 func (c *Chat) ProcessConn(conn net.Conn) {
-	data := make([]byte, 254)
-	var message string
-
-	// Getting client's nickname
-	message = color.BlueString("Enter your name: ")
-	if _, err := conn.Write([]byte(message)); err != nil {
-		conn.Close()
-		return
-	}
-	len, err := conn.Read(data)
+	username, err := GetInfoFromClient("Enter your name: ", conn)
 	if err != nil {
-		log.Printf("Client %s has not been connected", conn.RemoteAddr())
-		conn.Close()
 		return
 	}
-	username := string(data[:len])
-
-	// Getting room's name
-	message = color.BlueString("Enter room name you want to join: ")
-	if _, err = conn.Write([]byte(message)); err != nil {
-		conn.Close()
-		return
-	}
-	len, err = conn.Read(data)
+	roomname, err := GetInfoFromClient("Enter room name you want to join: ", conn)
 	if err != nil {
-		log.Printf("Client %s has not been connected", conn.RemoteAddr())
-		conn.Close()
 		return
 	}
-	roomname := string(data[:len])
 
-	// Start up the room
+	// Create room if room does not exist
 	c.ProcessRoom(roomname)
 
-	// Joining the room
-	c.Lock()
-	defer c.Unlock()
-
-	room := c.Rooms[roomname]
-	var client *Client
-
 	if c.IsUsernameUniq(username, roomname) {
-		client = CreateClient(username, conn)
+		client := CreateClient(username, conn)
+		c.Lock()
+		room := c.Rooms[roomname]
 		room.Register <- client
+		c.Unlock()
+		go c.ListenClient(client, room)
 	} else {
-		message = color.HiRedString("This nickname is already exists in this room.\n")
-		_, err := conn.Write([]byte(message))
-		if err != nil {
+		message := color.HiRedString("This nickname is already exists in this room.\n")
+		if _, err := conn.Write([]byte(message)); err != nil {
 			log.Println("Error when send to client")
 		}
+
 		go c.ProcessConn(conn)
 		return
 	}
+}
 
-	go c.ListenClient(client, room)
+// GetInfoFromClient sends message with request to client and accept an answer from client
+func GetInfoFromClient(requestMsg string, conn net.Conn) (result string, err error) {
+	data := make([]byte, 254)
+
+	message := color.BlueString(requestMsg)
+	if _, err = conn.Write([]byte(message)); err != nil {
+		conn.Close()
+		return 
+	}
+
+	length, err := conn.Read(data)
+	if err != nil {
+		log.Printf("Client %s has not been connected", conn.RemoteAddr())
+		conn.Close()
+		return "", err
+	}
+	result = string(data[:length])
+
+	return
 }
 
 // ProcessRoom creates room if room does not exists
 func (c *Chat) ProcessRoom(roomname string) {
-	c.Lock()
-	defer c.Unlock()
+	c.Lock(); defer c.Unlock()
 
 	if _, exists := c.Rooms[roomname]; !exists {
 		c.Rooms[roomname] = CreateRoom(roomname)
@@ -108,6 +101,8 @@ func (c *Chat) ProcessRoom(roomname string) {
 
 // IsUsernameUniq checks if username is uniq in room
 func (c *Chat) IsUsernameUniq(username, roomname string) bool {
+	c.Lock(); defer c.Unlock()
+
 	_, exists := c.Rooms[roomname].Clients[username]
 	return !exists
 }
@@ -137,7 +132,7 @@ func (c *Chat) ListenClient(client *Client, room *Room) {
 			c.ProcessConn(client.Conn)
 			return
 		case "/list":
-			room.SendClients(client)
+			room.SendClientList(client)
 		default:
 			room.Messages <- fmt.Sprintf("(%s) %s: %s", room.Name, client.Username, rawMessage)
 		}
