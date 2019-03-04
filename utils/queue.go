@@ -69,7 +69,7 @@ func (d *Queue) FromHeadToTail() []string {
 	}
 
 	var elementsPastCounter int
-	result := make([]string, 128)
+	result := make([]string, 0)
 
 	for i := d.Head; i != d.Tail || elementsPastCounter != d.Len; i++ {
 		if i == len(d.Buf)-1 {
