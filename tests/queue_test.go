@@ -2,6 +2,7 @@ package tests
 
 import (
 	"testing"
+	
 	"chat/utils"
 )
 
@@ -83,7 +84,7 @@ func TestQueueFromHeadToTail(t *testing.T) {
 		_, _ = queue.Pop()
 	}
 
-	if result := queue.FromHeadToTail(); result != nil {
+	if elem := queue.FromHeadToTail(); elem != nil {
 		t.FailNow()
 	}
 }
