@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	host   = "127.0.0.1"
-	port   = "8000"
+	host = "127.0.0.1"
+	port = "8000"
 )
 
 func main() {
@@ -15,7 +15,7 @@ func main() {
 
 	chat := server.CreateChat()
 	go chat.Run()
-	go chat.CleanChat()
+	go chat.CleanChat(60)
 
 	connector := server.CreateConnector(host, port)
 	connector.AcceptConn(chat)

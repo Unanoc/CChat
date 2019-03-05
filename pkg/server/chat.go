@@ -144,10 +144,10 @@ func (c *Chat) ListenClient(client *Client, room *Room) {
 	}
 }
 
-// CleanChat removes rooms with zero clients once a minute
-func (c *Chat) CleanChat() {
+// CleanChat removes rooms with zero clients once an n seconds
+func (c *Chat) CleanChat(n int) {
 	for {
-		time.Sleep(1 * time.Minute)
+		time.Sleep(time.Duration(n) * time.Second)
 		c.Lock()
 		for _, room := range c.Rooms {
 			if room.ClientCount() == 0 {
