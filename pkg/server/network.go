@@ -4,20 +4,24 @@ import (
 	"log"
 	"net"
 )
+
+// Connector is network layer
 type Connector struct {
-	Host string
-	Port string
+	Host   string
+	Port   string
 	Remote string
 }
 
-func CreateConnector(host, port string) *Connector{
-	return &Connector {
-		Host: host,
-		Port: port,
+// CreateConnector returns an instance of Connector
+func CreateConnector(host, port string) *Connector {
+	return &Connector{
+		Host:   host,
+		Port:   port,
 		Remote: host + ":" + port,
 	}
 }
 
+// AcceptConn creates listener and then listen to new connections
 func (c *Connector) AcceptConn(chat *Chat) {
 	listener, err := net.Listen("tcp", c.Remote)
 	defer listener.Close()
