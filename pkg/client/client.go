@@ -41,7 +41,7 @@ func (c *Client) Disconnect() {
 
 // GetMessagesHandler gets messages for client
 func (c *Client) GetMessagesHandler() {
-	readStr := make([]byte, 254)
+	readStr := make([]byte, 2*254) // 254 bytes for message, 254 for info part of message
 
 	for {
 		length, err := c.Conn.Read(readStr)
