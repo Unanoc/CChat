@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"testing"
+	"time"
 
 	"chat/pkg/client"
 	"chat/pkg/server"
@@ -23,7 +24,7 @@ var (
 // start server
 func init() {
 	go chat.Run()
-	go chat.CleanChat()
+	go chat.CleanChat(1)
 	go connector.AcceptConn(chat)
 }
 
@@ -82,11 +83,7 @@ func TestClientsInRoom(t *testing.T) {
 	testCase := [][]string{
 		[]string{"client_1", "test_room2"},
 		[]string{"client_2", "test_room2"},
-		[]string{"client_3", "test_room2"},
-		[]string{"client_4", "test_room2"},
-		[]string{"client_5", "test_room2"},
-		[]string{"client_6", "other_test_room"},
-		[]string{"client_7", "other_test_room"},
+		[]string{"client_3", "other_test_room"},
 	}
 
 	// start clients
@@ -109,7 +106,7 @@ func TestClientsInRoom(t *testing.T) {
 	testRoom := chat.Rooms["test_room2"]
 	otherTestRoom := chat.Rooms["other_test_room"]
 
-	if testRoom.ClientCount() != 5 && otherTestRoom.ClientCount() != 2 {
+	if testRoom.ClientCount() != 2 && otherTestRoom.ClientCount() != 1 {
 		t.FailNow()
 	}
 }
@@ -129,7 +126,7 @@ func TestMsgLength(t *testing.T) {
 		t.FailNow()
 	}
 	// Miss message about success connection
-	readStr := make([]byte, 254)
+	readStr := make([]byte, 2*254)
 	_, err = client.Conn.Read(readStr)
 	if err != nil {
 		t.Error("Unexpected error: ", err.Error(), "\n")
@@ -143,7 +140,7 @@ func TestMsgLength(t *testing.T) {
 		"He forbade affixed parties of assured " +
 		"to me windows. Happiness him nor she " +
 		"disposing provision. Add astonished " +
-		"principles precaution yet friendship stimulated. More, than 254 bytes."
+		"principles precaution yet friendship stimulated."
 
 	// Writing to server
 	if _, err := client.Conn.Write([]byte(testMsg)); err != nil {
@@ -155,12 +152,51 @@ func TestMsgLength(t *testing.T) {
 		t.Error("Unexpected error: ", err.Error(), "\n")
 		t.FailNow()
 	}
-	fmt.Println(string(readStr[:length]))
-	if string(readStr[:length]) != "(test_room3) client: "+testMsg[:233] {
+
+	if string(readStr[21:length]) != testMsg[:254]+"\n" {
 		t.FailNow()
 	}
 }
 
-func TestBroadcast(t *testing.T) {
+func TestCleanRoom(t *testing.T) {
+	log.SetOutput(ioutil.Discard)
+	testCase := [][]string{
+		[]string{"client_1", "test_room_for_clean1"},
+		[]string{"client_2", "test_room_for_clean2"},
+		[]string{"client_3", "test_room_for_clean3"},
+		[]string{"client_4", "test_room_for_clean4"},
+		[]string{"client_5", "test_room_for_clean5"},
+	}
 
+	// start clients
+	clients := make([]*client.Client, 0)
+	for _, clientCase := range testCase {
+		client, err := client.CreateClient(host, port)
+		if err != nil {
+			t.Error("Unexpected error: ", err.Error(), "\n")
+			t.FailNow()
+		}
+		clients = append(clients, client)
+
+		if err = ReadAndWrite(clientCase, client.Conn); err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
+		go client.GetMessagesHandler()
+	}
+
+	currentCountRoom := len(chat.Rooms)
+	if currentCountRoom < len(testCase) {
+		t.FailNow()
+	}
+
+	for _, client := range clients {
+		client.Disconnect()
+	}
+
+	time.Sleep(3 * time.Second)
+	currentCountRoom = len(chat.Rooms)
+	if currentCountRoom != 0 {
+		t.FailNow()
+	}
 }
