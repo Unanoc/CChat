@@ -1,7 +1,7 @@
 package server
 
 import (
-	"chat/utils"
+	"chat/pkg/queue"
 	"net"
 
 	"github.com/fatih/color"
@@ -29,7 +29,7 @@ func CreateRoom(name string) *Room {
 		Unregister: make(chan *Client),
 		Clients:    make(map[string]*Client),
 		Messages:   make(chan string),
-		Storage:    utils.CreateQueue(128),
+		Storage:    queue.CreateQueue(128),
 	}
 }
 
@@ -40,7 +40,7 @@ type Room struct {
 	Unregister chan *Client
 	Clients    map[string]*Client
 	Messages   chan string
-	Storage    *utils.Queue
+	Storage    *queue.Queue
 }
 
 // Run starts a room for message exchange
@@ -89,7 +89,7 @@ func (r *Room) SendHistory(storage []string, client *Client) {
 	}
 }
 
-// SendClients sends list of clients of the room
+// SendClientList sends list of clients of the room
 func (r *Room) SendClientList(reciever *Client) {
 	for _, client := range r.Clients {
 		r.SendToClient(color.HiYellowString("%s\n", client.Username), reciever)

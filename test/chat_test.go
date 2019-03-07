@@ -1,4 +1,4 @@
-package tests
+package test
 
 import (
 	"fmt"
@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"chat/pkg/client"
-	"chat/pkg/server"
+	"chat/internal/client"
+	"chat/internal/server"
 
 	"github.com/fatih/color"
 )

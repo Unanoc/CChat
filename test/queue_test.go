@@ -1,9 +1,9 @@
-package tests
+package test
 
 import (
 	"testing"
-	
-	"chat/utils"
+
+	"chat/pkg/queue"
 )
 
 var (
@@ -23,13 +23,13 @@ var (
 )
 
 func TestQueuePush(t *testing.T) {
-	queue := utils.CreateQueue(3)
+	queue := queue.CreateQueue(3)
 
 	for _, value := range testCaseQueuePushPop {
 		queue.Push(value)
 	}
 
-	for index , value := range testCaseQueuePushPop {
+	for index, value := range testCaseQueuePushPop {
 		if queue.Buf[index] != value {
 			t.FailNow()
 		}
@@ -48,7 +48,7 @@ func TestQueuePush(t *testing.T) {
 }
 
 func TestQueuePop(t *testing.T) {
-	queue := utils.CreateQueue(3)
+	queue := queue.CreateQueue(3)
 
 	for _, value := range testCaseQueuePushPop {
 		queue.Push(value)
@@ -66,12 +66,12 @@ func TestQueuePop(t *testing.T) {
 }
 
 func TestQueueFromHeadToTail(t *testing.T) {
-	queue := utils.CreateQueue(3)
+	queue := queue.CreateQueue(3)
 	for _, value := range testCaseQueueFromHeadToTail {
 		queue.Push(value)
 	}
 
-	result := queue.FromHeadToTail() 
+	result := queue.FromHeadToTail()
 	expected := []string{"test3", "test4", "test5"}
 
 	for index, expectedValue := range expected {
