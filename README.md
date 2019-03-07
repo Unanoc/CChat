@@ -3,7 +3,11 @@ CLI room chat which is based on sockets
 
 ## Install
 ```
-https://github.com/Unanoc/CChat.git
+git clone https://github.com/Unanoc/CChat.git  (https)
+```
+or
+```
+git clone git@github.com:Unanoc/CChat.git  (ssh)
 ```
 
 ## How to run the server?
