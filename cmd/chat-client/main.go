@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"chat/pkg/client"
+	"chat/internal/client"
 )
 
 var (

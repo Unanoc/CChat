@@ -1,7 +1,7 @@
 package main
 
 import (
-	"chat/pkg/server"
+	"chat/internal/server"
 	"log"
 )
 
