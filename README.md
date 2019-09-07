@@ -36,4 +36,4 @@ Besides, there are 3 commands for client:
 
 
 ## How it looks like?
-<img src="https://github.com/Unanoc/CChat/tree/master/src/clients.png" width="720">
+<img src="https://github.com/Unanoc/CChat/blob/master/src/clients.png" width="720">
