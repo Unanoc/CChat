@@ -33,3 +33,7 @@ Besides, there are 3 commands for client:
 * **/quit** - exit
 * **/list** - get list of clients in room
 * **/change_room** - change room
+
+
+## How it looks like?
+<img src="https://github.com/Unanoc/CChat/tree/master/src/clients.png" width="720">
