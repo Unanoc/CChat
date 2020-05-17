@@ -1,23 +1,23 @@
-# CChat
+# clichat
 Command Line Interface chat which is based on sockets
 
 ## Install
 ```
-git clone https://github.com/Unanoc/CChat.git  (https)
+git clone https://github.com/leedaniil/CChat.git  (https)
 ```
 or
 ```
-git clone git@github.com:Unanoc/CChat.git  (ssh)
+git clone git@github.com:leedaniil/clichat.git  (ssh)
 ```
 
 ## How to run the server?
 ```
-cd CChat/cmd/chat-server && go run main.go
+cd clichat/cmd/chat-server && go run main.go
 ```
 
 ## How to run the client?
 ```
-cd CChat/cmd/chat-client && go run main.go
+cd clichat/cmd/chat-client && go run main.go
 ```
 
 ## Manual for client
@@ -36,4 +36,4 @@ Besides, there are 3 commands for client:
 
 
 ## How it looks like?
-<img src="https://github.com/Unanoc/CChat/blob/master/src/clients.png" width="720">
+<img src="https://github.com/leedaniil/clichat/blob/master/src/clients.png" width="720">
