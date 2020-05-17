@@ -3,7 +3,7 @@ Command Line Interface chat which is based on sockets
 
 ## Install
 ```
-git clone https://github.com/leedaniil/CChat.git  (https)
+git clone https://github.com/leedaniil/clichat.git  (https)
 ```
 or
 ```
